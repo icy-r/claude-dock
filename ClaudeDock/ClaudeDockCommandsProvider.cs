@@ -328,7 +328,18 @@ internal static class SessionView
 /// <summary>Holds a ListItem per session and updates it in place, so the dock doesn't flicker.</summary>
 internal sealed class SessionItemCache
 {
-    private readonly Dictionary<string, (ListItem Item, FocusSessionCommand Go)> _items = [];
+    private sealed class Entry(ListItem item, FocusSessionCommand go)
+    {
+        public ListItem Item { get; } = item;
+
+        public FocusSessionCommand Go { get; } = go;
+
+        public string TagsSig { get; set; } = string.Empty;
+
+        public string DetailsSig { get; set; } = string.Empty;
+    }
+
+    private readonly Dictionary<string, Entry> _items = [];
     private readonly bool _forDock;
 
     public SessionItemCache(bool forDock) => _forDock = forDock;
@@ -341,7 +352,7 @@ internal sealed class SessionItemCache
             var item = new ListItem(go);
             var key = s.Key;
             item.MoreCommands = [new CommandContextItem(new RenameSessionCommand(() => go.Session, key))];
-            entry = (item, go);
+            entry = new Entry(item, go);
             _items[s.Key] = entry;
         }
 
@@ -358,8 +369,24 @@ internal sealed class SessionItemCache
             i.Title = SessionView.Label(s) is { } l ? $"{l} — {s.DisplayTitle}" : s.DisplayTitle;
             i.Subtitle = SessionView.RowSubtitle(s);
             i.Section = SessionView.Section(s);
-            i.Tags = SessionView.Tags(s);
-            i.Details = SessionView.Details(s, entry.Go, new RenameSessionCommand(() => entry.Go.Session, s.Key));
+
+            // Assign tags and details only when their text changed: each assignment re-renders the
+            // row and, for the selected row, the whole details pane.
+            var tags = SessionView.Tags(s);
+            var tagsSig = string.Join("|", tags.Select(t => t.Text));
+            if (tagsSig != entry.TagsSig)
+            {
+                entry.TagsSig = tagsSig;
+                i.Tags = tags;
+            }
+
+            var details = SessionView.Details(s, entry.Go, new RenameSessionCommand(() => entry.Go.Session, s.Key));
+            var detailsSig = details.Title + "\n" + details.Body + "\n" + string.Join("|", details.Metadata.Select(m => m.Key + "=" + (m.Data as DetailsLink)?.Text));
+            if (detailsSig != entry.DetailsSig)
+            {
+                entry.DetailsSig = detailsSig;
+                i.Details = details;
+            }
         }
 
         return i;
@@ -427,6 +454,7 @@ internal sealed partial class SessionsPage : ListPage
 {
     private readonly SessionItemCache _cache = new(forDock: false);
     private readonly object _gate = new();
+    private string _layout = "<init>";
 
     public SessionsPage()
     {
@@ -436,23 +464,50 @@ internal sealed partial class SessionsPage : ListPage
         Icon = Icons.Claude;
         ShowDetails = true;
         PlaceholderText = "Filter sessions…";
-        SessionMonitor.Changed += _ => RaiseItemsChanged();
-        LabelStore.Changed += () => RaiseItemsChanged();
+        SessionMonitor.Changed += OnChanged;
+        LabelStore.Changed += () => OnChanged(SessionMonitor.Current);
     }
 
     public override IListItem[] GetItems()
     {
         var sessions = SessionMonitor.Current;
-        if (sessions.Count == 0)
-        {
-            return [new ListItem(new NoOpCommand()) { Title = "No Claude sessions found", Icon = Icons.None }];
-        }
-
         lock (_gate)
         {
+            _layout = Layout(sessions);
+            if (sessions.Count == 0)
+            {
+                return [new ListItem(new NoOpCommand()) { Title = "No Claude sessions found", Icon = Icons.None }];
+            }
+
             var items = sessions.Select(_cache.Get).Cast<IListItem>().ToArray();
             _cache.Prune(sessions);
             return items;
         }
     }
+
+    // Reloading the list (RaiseItemsChanged) moves the selection back to the first row. So on a poll,
+    // update the rows in place, and reload only when rows come, go, or move to another group.
+    private void OnChanged(IReadOnlyList<ClaudeSession> sessions)
+    {
+        lock (_gate)
+        {
+            foreach (var s in sessions)
+            {
+                _cache.Get(s);
+            }
+
+            var layout = Layout(sessions);
+            if (layout == _layout)
+            {
+                return;
+            }
+
+            _layout = layout;
+        }
+
+        RaiseItemsChanged();
+    }
+
+    private static string Layout(IReadOnlyList<ClaudeSession> sessions) =>
+        string.Join("|", sessions.Select(s => s.Key + "@" + SessionView.Section(s)));
 }
