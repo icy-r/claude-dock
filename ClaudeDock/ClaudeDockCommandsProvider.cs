@@ -12,7 +12,6 @@ public sealed partial class ClaudeDockCommandsProvider : CommandProvider
     public const string BandId = "com.claudedock.sessions";
 
     private readonly SessionsBand _band = new();
-    private readonly Work.WorkBand _workBand = new();
     private readonly ICommandItem[] _commands;
 
     public ClaudeDockCommandsProvider()
@@ -27,9 +26,6 @@ public sealed partial class ClaudeDockCommandsProvider : CommandProvider
                 Title = "Claude sessions",
                 Subtitle = "Status of running Claude Code sessions",
             },
-            new CommandItem(new Work.WorkListPage(Work.WorkKind.Jira)) { Title = "Jira: assigned to me" },
-            new CommandItem(new Work.WorkListPage(Work.WorkKind.MyPrs)) { Title = "Bitbucket: my pull requests" },
-            new CommandItem(new Work.WorkListPage(Work.WorkKind.Review)) { Title = "Bitbucket: pull requests to review" },
         ];
         Notifier.Init();
         SessionMonitor.Start();
@@ -37,7 +33,7 @@ public sealed partial class ClaudeDockCommandsProvider : CommandProvider
 
     public override ICommandItem[] TopLevelCommands() => _commands;
 
-    public override ICommandItem[]? GetDockBands() => [_band, _workBand];
+    public override ICommandItem[]? GetDockBands() => [_band];
 }
 
 internal static class Icons

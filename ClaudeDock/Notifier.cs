@@ -5,7 +5,7 @@ using Windows.UI.Notifications;
 
 namespace ClaudeDock;
 
-/// <summary>Windows toasts for "a session needs you" and "new review request".</summary>
+/// <summary>Windows toast when a session starts waiting for you.</summary>
 internal static class Notifier
 {
     private static bool _init;
@@ -33,8 +33,6 @@ internal static class Notifier
                 $"Claude needs you: {SessionView.DockTitle(s)}",
                 SessionView.Wants(s) is { } w ? $"{s.StatusText} — wants {w}" : s.StatusText,
                 $"{SessionView.HostName(s)} · {s.Cwd} · click the dock item to jump there");
-        Work.WorkMonitor.NewReview += p =>
-            Show($"New review: {p.RepoName} #{p.Id}", p.Title, $"by {p.Author}");
     }
 
     public static void Show(string title, string line1, string line2)

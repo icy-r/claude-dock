@@ -1,13 +1,12 @@
 # Claude Dock
 
-Dock widgets for the [PowerToys Command Palette](https://learn.microsoft.com/windows/powertoys/command-palette/overview) Dock:
+A [PowerToys Command Palette](https://learn.microsoft.com/windows/powertoys/command-palette/overview)
+Dock widget that shows every running Claude Code session (Windows and WSL), with a colored status
+dot, a rich hover preview, and one click to jump to its terminal tab (Windows Terminal or Cursor/VS Code).
 
-- **Claude sessions**: every running Claude Code session (Windows and WSL), with a colored status
-  dot, a rich hover preview, and one click to jump to its terminal tab (Windows Terminal or Cursor/VS Code).
-- **Work**: your assigned Jira issues, your open Bitbucket Cloud pull requests, and the PRs waiting
-  for your review, with build state, approvals and authors.
+Looking for the Jira and Bitbucket widget? It moved to [icy-r/work-dock](https://github.com/icy-r/work-dock).
 
-> Community project. Not affiliated with or endorsed by Anthropic, Microsoft, or Atlassian.
+> Community project. Not affiliated with or endorsed by Anthropic or Microsoft.
 
 ## Claude sessions band
 
@@ -30,42 +29,6 @@ Dock widgets for the [PowerToys Command Palette](https://learn.microsoft.com/win
   `~/.claude-dock/labels.json`.
 - **Toasts**: a Windows notification when a session starts waiting for you.
 
-## Work band (optional)
-
-| Item | Shows |
-|---|---|
-| `Jira N · k!` | assigned issues that are not done; `k!` = high priority, overdue, or blocked |
-| `PRs N · k✓ · k✗` | your open PRs; ready to merge / needs attention (changes requested or build failed) |
-| `Review N +k🤖` | PRs where you are a reviewer; `+k🤖` = bot PRs (Renovate etc.) |
-
-Each item has a hover summary. Click it for a grouped list with tags (author, approvals, build,
-comments, tasks, age) and a details pane (reviewers, each build with a link, branches, linked Jira issue).
-
-Build state uses only the PR's head commit and the newest run of each pipeline. A stopped run that a
-newer run replaced does not count. "Ready to merge" is a heuristic (2 approvals, or all reviewers
-approved, nothing blocking), not Bitbucket's merge checks.
-
-### Setup
-
-**Jira Cloud**: run this in your own terminal. The token goes to a hidden prompt and is stored in
-Windows Credential Manager (`ClaudeDock:jira`). The site goes to `~/.claude-dock/config.json`.
-
-```powershell
-.\set-jira-token.ps1 -Site https://your-company.atlassian.net -Email you@your-company.com
-```
-
-Token: <https://id.atlassian.com/manage-profile/security/api-tokens>. Classic, or scoped with
-`read:jira-work` and `read:jira-user`.
-
-**Bitbucket Cloud**: the band reads, in this order:
-
-1. Windows Credential Manager, generic credential `ClaudeDock:bitbucket` (user = Atlassian email,
-   password = API token with Bitbucket read scopes).
-2. The `bitbucket` MCP server env in `~/.cursor/mcp.json` (`BITBUCKET_USER_EMAIL`, `BITBUCKET_API_TOKEN`).
-
-The review list scans your working set (repos of your recent PRs plus recently updated repos),
-not every repo in a large workspace.
-
 ## Requirements
 
 - Windows 11, PowerToys with Command Palette and its Dock enabled.
@@ -77,7 +40,7 @@ not every repo in a large workspace.
 
 ```powershell
 .\pack.ps1                         # build and register the package, restart Command Palette
-.\add-to-dock.ps1                  # pin both bands to the Dock
+.\add-to-dock.ps1                  # pin the band to the Dock
 .\cursor-extension\pack-vsix.ps1   # optional: Cursor companion extension
 ```
 
@@ -90,15 +53,14 @@ not every repo in a large workspace.
 Command Palette again. Stopping only the UI leaves extensions linked to the dead instance, and their
 bands stop updating.
 
-`add-to-dock.ps1 -Section StartBands|CenterBands|EndBands` picks where new bands go. Bands that are
-already on the Dock stay where you put them. It backs up `settings.json` first.
+`add-to-dock.ps1 -Section StartBands|CenterBands|EndBands` picks where the band goes. If it is
+already on the Dock, it stays where you put it. It backs up `settings.json` first.
 
 ## Diagnostics
 
 ```powershell
 dotnet build ClaudeDock\ClaudeDock.csproj -c Debug -p:Platform=x64 -o out\cli
 .\out\cli\ClaudeDock.exe --dump | Out-String                 # sessions as the band sees them
-.\out\cli\ClaudeDock.exe --work | Out-String                 # Jira and Bitbucket
 .\out\cli\ClaudeDock.exe --focus <sessionIdPrefix> | Out-String
 ```
 

@@ -1,10 +1,10 @@
-# Pins the Claude Dock bands to the Command Palette Dock and restarts Command Palette.
-# Bands: com.claudedock.sessions (Claude sessions) and com.claudedock.work (Jira & PRs).
+# Pins the Claude Dock band to the Command Palette Dock and restarts Command Palette.
+# Band: com.claudedock.sessions (Claude Code sessions).
 # A band that is already on the dock stays where you put it. A missing band goes right after
 # another Claude Dock band if there is one, else at the start of -Section. Backs up settings.json.
 param(
     [ValidateSet("StartBands", "CenterBands", "EndBands")][string]$Section = "EndBands",
-    [string[]]$BandIds = @("com.claudedock.sessions", "com.claudedock.work")
+    [string[]]$BandIds = @("com.claudedock.sessions")
 )
 $ErrorActionPreference = "Stop"
 

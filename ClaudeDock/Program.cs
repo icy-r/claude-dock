@@ -41,32 +41,6 @@ public static class Program
             Notifier.Show("Claude Dock test", "Toasts work.", "You can dismiss this.");
             Thread.Sleep(1500);
         }
-        else if (args.Length > 0 && args[0] == "--work")
-        {
-            var done = new ManualResetEventSlim();
-            Work.WorkMonitor.Changed += _ => done.Set();
-            Work.WorkMonitor.Refresh();
-            done.Wait(TimeSpan.FromSeconds(120));
-            var w = Work.WorkMonitor.Current;
-            Console.WriteLine($"Jira: {w.JiraError ?? w.Issues.Count + " issues"}");
-            foreach (var i in w.Issues.Take(5))
-            {
-                Console.WriteLine($"  {i.Key} [{i.Status}] {i.Summary}");
-            }
-
-            Console.WriteLine($"Bitbucket: {w.BitbucketError ?? $"{w.MyPrs.Count} mine, {w.ToReview.Count} to review"}");
-            foreach (var p in w.MyPrs.Take(4))
-            {
-                Console.WriteLine($"  mine {p.Repo}#{p.Id} ready={p.ReadyToMerge} {p.Approvals}/{p.Reviewers.Length} build={p.Build} changes={p.ChangesRequested} {p.SourceBranch}->{p.TargetBranch}");
-            }
-
-            Console.WriteLine(Work.WorkView.MyPrsHover(w));
-            Console.WriteLine(Work.WorkView.ReviewHover(w));
-            foreach (var p in w.ToReview.Take(5))
-            {
-                Console.WriteLine($"  review {p.Repo}#{p.Id} {p.Approvals}/{p.Reviewers.Length} build={p.Build} comments={p.Comments} tasks={p.Tasks} bot={p.IsBot} approved={p.IApproved} jira={p.JiraKey} {p.Title}");
-            }
-        }
         else if (args.Length > 1 && args[0] == "--rename")
         {
             var s = SessionMonitor.PollOnce().Find(x => x.SessionId.StartsWith(args[1], StringComparison.OrdinalIgnoreCase));
