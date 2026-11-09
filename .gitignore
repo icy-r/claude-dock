@@ -1,0 +1,20 @@
+# Build output
+bin/
+obj/
+out/
+tools/
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Packages and signing material
+*.msix
+*.vsix
+*.pfx
+*.cer
+
+# Local data (labels, config, logs live in ~/.claude-dock, never here)
+*.log

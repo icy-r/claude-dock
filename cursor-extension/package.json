@@ -1,0 +1,13 @@
+{
+  "name": "claude-dock-focus",
+  "displayName": "Claude Dock Focus",
+  "description": "Lets the Claude Dock (PowerToys Command Palette) focus the terminal that runs a Claude Code session.",
+  "version": "0.1.0",
+  "publisher": "claudedock",
+  "license": "MIT",
+  "engines": { "vscode": "^1.80.0" },
+  "extensionKind": ["ui"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./extension.js",
+  "contributes": {}
+}
